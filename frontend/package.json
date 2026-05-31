@@ -51,6 +51,7 @@
         "tsc": "tsc -b tsconfig.app.json -w",
         "dev": "vite",
         "build": "upen && tsc -b && vite build",
+        "postbuild": "node scripts/copy-dist.js",
         "preview": "vite preview",
         "to-npm": "pnpm build && gh-pages -d dist"
     }
