@@ -20,19 +20,25 @@ func fixBounds(ctx context.Context, bounds *Rectangle) *Rectangle {
 	}
 
 	// Retrieve display configuration via Wails runtime
-	screens := runtime.ScreenGetAll(ctx)
+	screens, err := runtime.ScreenGetAll(ctx)
+	if err != nil {
+		screens = nil
+	}
 
-	var targetScreen *runtime.Screen
+	var targetScreen runtime.Screen
+	hasTarget := false
 	for _, screen := range screens {
 		if screen.IsCurrent {
-			targetScreen = &screen
+			targetScreen = screen
+			hasTarget = true
 			break
 		}
 	}
-	if targetScreen == nil {
+	if !hasTarget {
 		for _, screen := range screens {
 			if screen.IsPrimary {
-				targetScreen = &screen
+				targetScreen = screen
+				hasTarget = true
 				break
 			}
 		}
@@ -41,7 +47,7 @@ func fixBounds(ctx context.Context, bounds *Rectangle) *Rectangle {
 	// Fallback monitor dimensions if none detected
 	screenWidth := 1280
 	screenHeight := 720
-	if targetScreen != nil {
+	if hasTarget {
 		screenWidth = targetScreen.Width
 		screenHeight = targetScreen.Height
 	}
