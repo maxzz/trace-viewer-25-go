@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"embed"
 
 	"github.com/wailsapp/wails/v2"
@@ -23,7 +24,7 @@ func main() {
 
 	opts, err := loadIniFileOptions()
 	if err == nil && opts != nil && opts.Bounds != nil {
-		bounds := fixBounds(opts.Bounds)
+		bounds := fixBounds(context.Background(), opts.Bounds)
 		if bounds != nil {
 			initialWidth = bounds.Width
 			initialHeight = bounds.Height

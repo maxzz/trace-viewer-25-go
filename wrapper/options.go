@@ -63,20 +63,7 @@ func saveIniFileOptions(opts *IniOptions) error {
 	return os.WriteFile(filePath, data, 0644)
 }
 
-func fixBounds(bounds *Rectangle) *Rectangle {
-	if bounds == nil {
-		return nil
-	}
-	// Sanity check: width and height must be positive and reasonable
-	if bounds.Width < 100 || bounds.Height < 100 {
-		return nil
-	}
-	// Virtual screen coords on modern multi-monitor setups rarely exceed +/- 16000.
-	if bounds.X < -16000 || bounds.X > 16000 || bounds.Y < -16000 || bounds.Y > 16000 {
-		return nil
-	}
-	return bounds
-}
+// remove fixBounds, since it is now defined platform-specifically in options_windows.go and options_other.go
 
 func saveWindowOptions(ctx context.Context) {
 	// 1. Get current window state
@@ -123,14 +110,15 @@ func restoreWindowOptions(ctx context.Context) {
 	opts, err := loadIniFileOptions()
 	if err == nil && opts != nil {
 		if opts.Bounds != nil {
-			bounds := fixBounds(opts.Bounds)
+			bounds := fixBounds(ctx, opts.Bounds)
 			if bounds != nil {
-				runtime.WindowSetPosition(ctx, bounds.X, bounds.Y)
-				runtime.WindowSetSize(ctx, bounds.Width, bounds.Height)
+				restoreWindowPositionAndSize(ctx, bounds)
+			} else {
+				runtime.WindowShow(ctx)
 			}
+		} else {
+			runtime.WindowShow(ctx)
 		}
-		// Show window after positioning (if started hidden)
-		runtime.WindowShow(ctx)
 	} else {
 		// Default: just show the window
 		runtime.WindowShow(ctx)
