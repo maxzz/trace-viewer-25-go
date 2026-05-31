@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Trace Viewer 25 with Go/Wails Wrapper",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "pnpm --prefix frontend dev",
     "build": "pnpm --prefix frontend build",

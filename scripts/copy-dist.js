@@ -4,8 +4,8 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const src = path.resolve(__dirname, '../dist');
-const dest = path.resolve(__dirname, '../../wrapper/frontend/dist');
+const src = path.resolve(__dirname, '../frontend/dist');
+const dest = path.resolve(__dirname, '../wrapper/frontend/dist');
 
 if (fs.existsSync(src)) {
     console.log(`Copying built frontend from ${src} to ${dest}...`);
