@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Standalone Frontend Build
+dist/
+/frontend/dist/
+
+# Standalone Go/Wails Build
+/wrapper/build/bin/
+/wrapper/frontend/dist/
+/wrapper/to-diag-trace-go
+/wrapper/to-diag-trace-go.exe
+/wrapper/to-diag-trace-go-*.exe
+/wrapper/to-diag-trace-go-darwin-*
+/wrapper/to-diag-trace-go-linux-*
+/wrapper/to-diag-trace-go-windows-*
+
+# Go build & test artifacts
+*.test
+*.out
+*.exe
+/wrapper/vendor/
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment and Secrets
+.env
+.env.*
+!.env.example

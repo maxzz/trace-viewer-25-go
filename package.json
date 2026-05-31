@@ -1,0 +1,20 @@
+{
+  "name": "trace-viewer-25-go-root",
+  "version": "1.0.0",
+  "description": "Trace Viewer 25 with Go/Wails Wrapper",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --prefix frontend dev",
+    "build": "pnpm --prefix frontend build",
+    "dev:go": "pnpm --prefix wrapper dev",
+    "build:go": "pnpm --prefix wrapper build",
+    "build:go:all": "pnpm --prefix wrapper run build:all",
+    "build:go:windows": "pnpm --prefix wrapper run build",
+    "install:all": "pnpm install && pnpm --prefix frontend install && pnpm --prefix wrapper install"
+  },
+  "author": {
+    "name": "Max Zakharzhevskiy",
+    "email": "maxzz@msn.com"
+  },
+  "license": "MIT"
+}

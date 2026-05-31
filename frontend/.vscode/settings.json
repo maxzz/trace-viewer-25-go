@@ -1,0 +1,12 @@
+{
+    "tailwindCSS.experimental.classRegex": [
+        ["Classes \\=([^;]*);", "'([^']*)'"],
+        ["Classes \\=([^;]*);", "\"([^\"]*)\""],
+        ["Classes \\=([^;]*);", "\\`([^\\`]*)\\`"],
+
+        ["classNames\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
+    ],
+    "files.associations": {
+        "*.json5": "jsonc"
+    },
+}

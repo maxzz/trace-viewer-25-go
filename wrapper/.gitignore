@@ -1,0 +1,33 @@
+# Wails / Go binaries and build outputs
+/build/bin/
+/build/darwin/*.app
+/to-diag-trace-go
+/to-diag-trace-go.exe
+/to-diag-trace-go-*.exe
+/to-diag-trace-go-darwin-*
+/to-diag-trace-go-linux-*
+/to-diag-trace-go-windows-*
+
+# Go build & test artifacts
+*.test
+*.out
+*.exe
+/vendor/
+
+# Frontend (Node / npm / bundler)
+/frontend/node_modules/
+/frontend/dist/
+/frontend/build/
+/frontend/.svelte-kit/
+/frontend/.next/
+/frontend/out/
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment and Secrets
+.env
+.env.*
+!.env.example

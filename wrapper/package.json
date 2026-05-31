@@ -1,0 +1,33 @@
+{
+  "name": "to-diag-trace-go-root",
+  "version": "1.0.0",
+  "description": "Go tool to collect diagnostic traces",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maxzz/to-diag-trace-go.git"
+  },
+  "bugs": {
+    "url": "https://github.com/maxzz/to-diag-trace-go/issues"
+  },
+  "homepage": "https://github.com/maxzz/to-diag-trace-go#readme",
+  "author": {
+    "name": "Max Zakharzhevskiy",
+    "email": "maxzz@msn.com"
+  },
+  "license": "MIT",
+  "scripts": {
+    "dev": "wails dev",
+    "build": "wails build --clean --platform windows/amd64",
+    "build:all": "wails build --clean",
+    "build:macos": "wails build --clean --platform darwin/amd64",
+    "build:macos-arm": "wails build --clean --platform darwin/arm64",
+    "frontend:install": "pnpm --prefix frontend install",
+    "frontend:build": "pnpm --prefix frontend run build",
+    "frontend:dev": "pnpm --prefix frontend run dev",
+    "go:fmt": "go fmt ./...",
+    "go:vet": "go vet ./...",
+    "go:test": "go test ./...",
+    "wails:doctor": "wails doctor"
+  }
+}

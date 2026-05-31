@@ -1,0 +1,86 @@
+01.02.26
+    TODO: add electron build to reveal selected file in File Explorer
+    TODO: dark mode and switch - done
+    TODO: fix lines vertical padding - done
+    TODO: tweak left list selected item and add outline instead of bold font - done
+    TODO: add quick toolbar on the right from top menu - done
+    TODO: save position of vertical resizer - done
+    TODO: trancate on file name is not working - done
+    TODO: error badge place on the left - done
+    TODO: thread column as line with dots. separate line for each thread and tooltip to show thread ID - done
+	TODO: show open folder name in the browser tab caption - done
+	TODO: Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent} - done
+	TODO: Each child in a list should have a unique "key" prop. - done; fragment wo/ keys
+	
+	TODO: add checkbox to each filter to activate/deactivate this color filter - done 01.09.26
+	TODO: where from 5 digits for ms are comming it should be 3. simse like some file? or no it is after selecting item from file list green dot. a it's from C# interop dlls - done 01.09.26
+    TODO: don't calculate combined line until all files loaded - done 01.09.26
+	TODO: only active panel should have sky color highlight - done 01.09.26
+	TODO: jump back to full time line from TraceList current element - done 01.09.26
+	TODO: jump on full timeline - done 01.09.26
+	TODO: loading state is not updated - done 01.10.26
+    TODO: file navigation history backward and forward - done 01.18.26
+	TODO: option dialog checkboxes replace with toggles - done 01.19.26
+	TODO: copy file name from files list - done 01.19.26
+	TODO: add lime, slate, gray, zinc, and stone - done 01.23.26
+
+01.03.26
+    TODO: `-2147024894` add explanation
+	TODO: viewer: 0x80070002 show well known codes
+	TODO: https://www.google.com/search?q=0x800704C7&sourceid=chrome&ie=UTF-8 if selected text contains hr then search for it in new tab
+    
+    TODO: put context menu items also into top menu
+    TODO: filter by thread ID, errors, etc.
+    TODO: PageUp/PageDown should preserve current line position on page if possible.
+    TODO: add help dialog with keyboard shortcuts and other information.
+	TODO: find all files with trace at the crrent line time
+
+01.04.26		
+	TODO: fix size of select filter component
+	TODO: filter *Digital not working; debounce; cursor jumps to the end after each new character (use sync in atom or valtio).
+	TODO: viewer: if string is truncated then show tooltip: Getting 'QuickActions\QA_Finger' from 'SOFTWARE\DigitalPersona\Policies\Default'...
+	TODO: buttons in footer to jump to the next/prev error and show current error index from errors in this file. (or on the error line show next prev error buttons)
+	TODO: add buttons to show only files with errors and show file content only error lines (and +- 3 lines around or corresponding function name)
+	TODO: option to show columns
+    TODO: option to show only files with errors
+    TODO: add button to quick activate/deactivate current filter
+    TODO: when open folder and none of files match show message: Files loaded but do not match filter
+    
+01.09.26
+	TODO: remove scroll on full timeline
+	TODO: lines cursor should be default not pointer
+
+01.10.26
+	TODO: by moving into TraceList files trees rerenders
+	TODO: scroll to middle of TraceList if line is closed to the edge (if selected line is not in view otherwise do not scroll)
+
+01.19.26
+	TODO: add documentation
+    TODO: in options dialog don't set initial focus. focus ring needs to be updated
+    TODO: by clicking enter on input line options dialog should be closed (i.e. default button)
+
+	TODO: scroll in not working if selected the same item (but should happen)
+
+02.11.26
+    TODO: when open folder with multiple zip files we open all of them but probably should not, and window title should show zip file name not folder name.
+	TODO: navigation by errors; show only errors
+	TODO: show zip file name or folder - done
+	TODO: in file list copy file name 
+	TODO: filter to exclude or how to define regex for that
+	TODO: when navigating from file list and selected item is close to the top or bottom scroll to the center
+	TODO: don't treat file not found as an error (switch and separate counter per file w/ and wo/ file not found)
+
+02.12.26
+	TODO: if error mode is on show in view "There are no errors" - done
+	TODO: save selected file - won't do: `@src/components/1-file-list/1-file-list-row.tsx:95-116 add menu item to save` <- we don`t save raw contents of file.
+
+03.24.26
+    TODO: Why the first file drop does nothing and repeat the same will show loaded content?
+
+03.28.26
+    TODO: Add the list of monitor files dialog with swith for all of them to start/stop monitoring
+    TODO: Add sort files operations
+    TODO: Add marker of changed files without reload
+    TODO: Monitor is not realy working
+    TODO: Add button to reload folder, i.e. add new files and changed files
+    
