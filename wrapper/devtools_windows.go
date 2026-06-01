@@ -12,29 +12,6 @@ func (a *App) platformIsDevToolsOpen() bool {
 	return len(findDevToolsWindows()) > 0
 }
 
-// platformOpenDevTools simulates Ctrl+Shift+F12 to trigger Wails' built-in DevTools window.
-func (a *App) platformOpenDevTools() {
-	user32 := syscall.NewLazyDLL("user32.dll")
-	keybdEvent := user32.NewProc("keybd_event")
-
-	const (
-		VK_CONTROL      = 0x11
-		VK_SHIFT        = 0x10
-		VK_F12          = 0x7B
-		KEYEVENTF_KEYUP = 0x0002
-	)
-
-	// Simulate pressing Ctrl+Shift+F12
-	keybdEvent.Call(VK_CONTROL, 0, 0, 0)
-	keybdEvent.Call(VK_SHIFT, 0, 0, 0)
-	keybdEvent.Call(VK_F12, 0, 0, 0)
-
-	// Simulate releasing Ctrl+Shift+F12
-	keybdEvent.Call(VK_F12, 0, KEYEVENTF_KEYUP, 0)
-	keybdEvent.Call(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0)
-	keybdEvent.Call(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
-}
-
 // platformCloseDevTools finds any top-level window whose class is
 // Chrome_WidgetWin_1 (the class used by Chromium/WebView2 windows) and
 // whose title contains "DevTools", then sends it WM_CLOSE.
