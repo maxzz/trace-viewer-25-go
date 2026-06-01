@@ -50,6 +50,7 @@ func (a *App) ToggleDevTools() {
 		return
 	}
 
+	a.platformOpenDevTools()
 	a.SetDevToolsState(true)
 }
 
