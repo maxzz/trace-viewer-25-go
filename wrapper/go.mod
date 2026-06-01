@@ -1,4 +1,4 @@
-module to-diag-trace-go
+module trace-viewer-25-go
 
 go 1.22.0
 

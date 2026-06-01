@@ -27,7 +27,7 @@ func getIniFilePath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	appDir := filepath.Join(configDir, "to-diag-trace-go")
+	appDir := filepath.Join(configDir, "trace-viewer-25-go")
 	// Make sure the directory exists
 	if err := os.MkdirAll(appDir, 0755); err != nil {
 		return "", err

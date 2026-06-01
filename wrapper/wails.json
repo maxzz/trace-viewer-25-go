@@ -1,6 +1,6 @@
 {
-  "name": "to-diag-trace-go",
-  "outputfilename": "to-diag-trace-go",
+  "name": "trace-viewer-25-go",
+  "outputfilename": "trace-viewer-25-go",
   "frontend:dir": "../frontend",
   "wailsjsdir": "../frontend/src/wailsjs",
   "frontend:install": "pnpm install",

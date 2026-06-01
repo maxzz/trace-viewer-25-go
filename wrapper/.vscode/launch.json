@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Wails: Debug to-diag-trace-go",
+            "name": "Wails: Debug trace-viewer-25-go",
             "type": "go",
             "request": "launch",
             "mode": "exec",

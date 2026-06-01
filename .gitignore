@@ -9,12 +9,12 @@ dist/
 # Standalone Go/Wails Build
 /wrapper/build/bin/
 /wrapper/frontend/dist/
-/wrapper/to-diag-trace-go
-/wrapper/to-diag-trace-go.exe
-/wrapper/to-diag-trace-go-*.exe
-/wrapper/to-diag-trace-go-darwin-*
-/wrapper/to-diag-trace-go-linux-*
-/wrapper/to-diag-trace-go-windows-*
+/wrapper/trace-viewer-25-go
+/wrapper/trace-viewer-25-go.exe
+/wrapper/trace-viewer-25-go-*.exe
+/wrapper/trace-viewer-25-go-darwin-*
+/wrapper/trace-viewer-25-go-linux-*
+/wrapper/trace-viewer-25-go-windows-*
 
 # Go build & test artifacts
 *.test

@@ -1,5 +1,5 @@
 {
-    "name": "trace-viewer-25-go-root",
+    "name": "trace-viewer-25-go",
     "version": "1.0.0",
     "description": "Trace Viewer 25 with Go/Wails Wrapper",
     "private": true,

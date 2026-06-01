@@ -1,5 +1,5 @@
 {
-    "name": "to-diag-trace-go-root",
+    "name": "trace-viewer-25-go-wrapper",
     "version": "1.0.0",
     "description": "Go tool to collect diagnostic traces",
     "private": true,

@@ -1,12 +1,12 @@
 # Wails / Go binaries and build outputs
 /build/bin/
 /build/darwin/*.app
-/to-diag-trace-go
-/to-diag-trace-go.exe
-/to-diag-trace-go-*.exe
-/to-diag-trace-go-darwin-*
-/to-diag-trace-go-linux-*
-/to-diag-trace-go-windows-*
+/trace-viewer-25-go
+/trace-viewer-25-go.exe
+/trace-viewer-25-go-*.exe
+/trace-viewer-25-go-darwin-*
+/trace-viewer-25-go-linux-*
+/trace-viewer-25-go-windows-*
 
 # Go build & test artifacts
 *.test

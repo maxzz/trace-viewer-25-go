@@ -1,6 +1,6 @@
 # Trace Viewer 25 with Go/Wails Wrapper
 
-A high-performance diagnostic trace visualizer combining a modern, interactive React frontend (`trace-viewer-25`) with a native Go/Wails wrapper (`to-diag-trace-go`) for OS-level integration and features.
+A high-performance diagnostic trace visualizer combining a modern, interactive React frontend (`trace-viewer-25`) with a native Go/Wails wrapper (`trace-viewer-25-go`) for OS-level integration and features.
 
 ---
 
