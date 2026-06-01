@@ -4,8 +4,6 @@ package main
 
 import (
 	"context"
-	"os"
-	"strconv"
 	"syscall"
 	"time"
 	"unsafe"
@@ -281,13 +279,6 @@ func findMainWindowHWND() syscall.Handle {
 	myPid, _, _ := getCurrentProcessId.Call()
 	var mainHwnd syscall.Handle
 
-	// We'll write a debug log to see what windows are found
-	logFile, _ := os.OpenFile("C:\\y\\w\\2-web\\0-dp\\trace-viewer-25-go\\window_debug.log", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
-	if logFile != nil {
-		defer logFile.Close()
-		logFile.WriteString("Starting window enumeration...\n")
-	}
-
 	cb := syscall.NewCallback(func(hwnd syscall.Handle, _ uintptr) uintptr {
 		var pid uint32
 		getWindowThreadProcessId.Call(uintptr(hwnd), uintptr(unsafe.Pointer(&pid)))
@@ -300,16 +291,9 @@ func findMainWindowHWND() syscall.Handle {
 			getWindowTextW.Call(uintptr(hwnd), uintptr(unsafe.Pointer(&textBuf[0])), 256)
 			windowText := syscall.UTF16ToString(textBuf)
 
-			if logFile != nil {
-				logFile.WriteString("Found window: HWND=" + strconv.Itoa(int(hwnd)) + " Class=" + className + " Title=" + windowText + "\n")
-			}
-
 			if className == "wailsWindow" || className == "Chrome_WidgetWin_1" || windowText == "wails-events" {
 				mainHwnd = hwnd
-				if logFile != nil {
-					logFile.WriteString("Selected main window: " + className + "\n")
-				}
-				// Continue enumeration to log all, but save the handle
+				return 0 // stop enumeration
 			}
 		}
 		return 1 // continue enumeration
@@ -324,28 +308,10 @@ func findMainWindowHWND() syscall.Handle {
 func restoreWindowPositionAndSize(ctx context.Context, bounds *Rectangle) {
 	hwnd := findMainWindowHWND()
 
-	logFile, _ := os.OpenFile("C:\\y\\w\\2-web\\0-dp\\trace-viewer-25-go\\window_debug.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
-	if logFile != nil {
-		defer logFile.Close()
-		logFile.WriteString("restoreWindowPositionAndSize called with physical bounds: X=" + strconv.Itoa(bounds.X) + " Y=" + strconv.Itoa(bounds.Y) + " W=" + strconv.Itoa(bounds.Width) + " H=" + strconv.Itoa(bounds.Height) + "\n")
-	}
-
 	if hwnd != 0 {
 		monitors := getAllMonitors()
 
-		if logFile != nil {
-			logFile.WriteString("Enumerated monitors count: " + strconv.Itoa(len(monitors)) + "\n")
-			for i, m := range monitors {
-				logFile.WriteString("Monitor [" + strconv.Itoa(i) + "]: Scale=" + strconv.FormatFloat(m.Scale, 'f', 4, 64) + " IsPrimary=" + strconv.FormatBool(m.IsPrimary) + "\n")
-				logFile.WriteString("  Physical Monitor: L=" + strconv.Itoa(int(m.RcMonitor.Left)) + " T=" + strconv.Itoa(int(m.RcMonitor.Top)) + " R=" + strconv.Itoa(int(m.RcMonitor.Right)) + " B=" + strconv.Itoa(int(m.RcMonitor.Bottom)) + "\n")
-				logFile.WriteString("  Physical Work:    L=" + strconv.Itoa(int(m.RcWork.Left)) + " T=" + strconv.Itoa(int(m.RcWork.Top)) + " R=" + strconv.Itoa(int(m.RcWork.Right)) + " B=" + strconv.Itoa(int(m.RcWork.Bottom)) + "\n")
-			}
-		}
-
 		if len(monitors) == 0 {
-			if logFile != nil {
-				logFile.WriteString("Fallback: No monitors found. Calling WindowSetPosition/Size\n")
-			}
 			runtime.WindowSetPosition(ctx, bounds.X, bounds.Y)
 			runtime.WindowSetSize(ctx, bounds.Width, bounds.Height)
 			runtime.WindowShow(ctx)
@@ -363,9 +329,6 @@ func restoreWindowPositionAndSize(ctx context.Context, bounds *Rectangle) {
 			}
 		}
 		if bestMonitor == nil {
-			if logFile != nil {
-				logFile.WriteString("No containing monitor found. Selecting primary monitor...\n")
-			}
 			for i := range monitors {
 				if monitors[i].IsPrimary {
 					bestMonitor = &monitors[i]
@@ -408,10 +371,6 @@ func restoreWindowPositionAndSize(ctx context.Context, bounds *Rectangle) {
 			physY = workBottom - physHeight
 		}
 
-		if logFile != nil {
-			logFile.WriteString("Final physical bounds for SetWindowPos: X=" + strconv.Itoa(physX) + " Y=" + strconv.Itoa(physY) + " W=" + strconv.Itoa(physWidth) + " H=" + strconv.Itoa(physHeight) + "\n")
-		}
-
 		// Call native SetWindowPos with physical pixels
 		const (
 			SWP_NOZORDER   = 0x0004
@@ -437,13 +396,6 @@ func restoreWindowPositionAndSize(ctx context.Context, bounds *Rectangle) {
 		// Force the exact physical coordinates and size AFTER showing the window to ensure no DPI-suggested resize wins.
 		go func() {
 			time.Sleep(100 * time.Millisecond)
-			if logFile != nil {
-				lf, _ := os.OpenFile("C:\\y\\w\\2-web\\0-dp\\trace-viewer-25-go\\window_debug.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
-				if lf != nil {
-					lf.WriteString("Post-show secondary SetWindowPos reinforcement call: X=" + strconv.Itoa(physX) + " Y=" + strconv.Itoa(physY) + " W=" + strconv.Itoa(physWidth) + " H=" + strconv.Itoa(physHeight) + "\n")
-					lf.Close()
-				}
-			}
 			procSetWindowPos.Call(
 				uintptr(hwnd),
 				0,
@@ -455,9 +407,6 @@ func restoreWindowPositionAndSize(ctx context.Context, bounds *Rectangle) {
 			)
 		}()
 	} else {
-		if logFile != nil {
-			logFile.WriteString("HWND was 0! Fallback to Wails WindowSetPosition/Size\n")
-		}
 		// Fallback to Wails if HWND could not be resolved
 		runtime.WindowSetPosition(ctx, bounds.X, bounds.Y)
 		runtime.WindowSetSize(ctx, bounds.Width, bounds.Height)
