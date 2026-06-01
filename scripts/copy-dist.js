@@ -11,7 +11,7 @@ if (fs.existsSync(src)) {
     console.log(`Copying built frontend from ${src} to ${dest}...`);
     // Ensure destination directory exists
     fs.mkdirSync(dest, { recursive: true });
-    
+
     // Clear destination directory to avoid stale assets
     fs.rmSync(dest, { recursive: true, force: true });
     fs.mkdirSync(dest, { recursive: true });
