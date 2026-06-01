@@ -1,6 +1,6 @@
 {
   "name": "trace-viewer-25-go",
-  "outputfilename": "trace-viewer-25-go",
+  "outputfilename": "tv26",
   "frontend:dir": "../frontend",
   "wailsjsdir": "../frontend/src/wailsjs",
   "frontend:install": "pnpm install",
