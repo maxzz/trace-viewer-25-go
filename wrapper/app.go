@@ -7,7 +7,8 @@ import (
 
 // App struct
 type App struct {
-	ctx context.Context
+	ctx              context.Context
+	positionRestored bool
 }
 
 // NewApp creates a new App application struct
@@ -22,7 +23,10 @@ func (a *App) startup(ctx context.Context) {
 
 // domReady is called after front-end resources have been loaded
 func (a *App) domReady(ctx context.Context) {
-	restoreWindowOptions(ctx)
+	if !a.positionRestored {
+		a.positionRestored = true
+		restoreWindowOptions(ctx)
+	}
 }
 
 // beforeClose is called when the application is about to quit,

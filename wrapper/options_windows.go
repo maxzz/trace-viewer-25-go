@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -309,6 +310,8 @@ func restoreWindowPositionAndSize(ctx context.Context, bounds *Rectangle) {
 			SWP_NOACTIVATE = 0x0010
 		)
 		procSetWindowPos := user32.NewProc("SetWindowPos")
+
+		// 1. Move and size the hidden window first (with SWP_NOACTIVATE)
 		procSetWindowPos.Call(
 			uintptr(hwnd),
 			0,
@@ -318,8 +321,24 @@ func restoreWindowPositionAndSize(ctx context.Context, bounds *Rectangle) {
 			uintptr(physHeight),
 			uintptr(SWP_NOZORDER|SWP_NOACTIVATE),
 		)
-		// Show the window using Wails runtime so it updates internal states
+
+		// 2. Show the window using Wails runtime so it updates internal states and hasBeenShown flags
 		runtime.WindowShow(ctx)
+
+		// 3. Force the exact physical coordinates and size AFTER showing the window.
+		// This bypasses any WM_DPICHANGED suggestions and first-show centering overrides.
+		go func() {
+			time.Sleep(100 * time.Millisecond)
+			procSetWindowPos.Call(
+				uintptr(hwnd),
+				0,
+				uintptr(physX),
+				uintptr(physY),
+				uintptr(physWidth),
+				uintptr(physHeight),
+				uintptr(SWP_NOZORDER),
+			)
+		}()
 	} else {
 		// Fallback to Wails if HWND could not be resolved
 		runtime.WindowSetPosition(ctx, bounds.X, bounds.Y)
