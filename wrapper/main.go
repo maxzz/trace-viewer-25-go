@@ -26,8 +26,7 @@ func main() {
 	if err == nil && opts != nil && opts.Bounds != nil {
 		bounds := fixBounds(context.Background(), opts.Bounds)
 		if bounds != nil {
-			initialWidth = bounds.Width
-			initialHeight = bounds.Height
+			initialWidth, initialHeight = scalePhysicalToLogical(bounds)
 		}
 	}
 

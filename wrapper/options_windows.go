@@ -4,6 +4,8 @@ package main
 
 import (
 	"context"
+	"os"
+	"strconv"
 	"syscall"
 	"time"
 	"unsafe"
@@ -107,24 +109,26 @@ func getAllMonitors() []Monitor {
 	return monitors
 }
 
-func getOverlapArea(r1, r2 Rectangle) int {
+func getPhysicalOverlapArea(r1 Rectangle, r2 RECT) int {
 	x1 := r1.X
-	if r2.X > x1 {
-		x1 = r2.X
+	r2Left := int(r2.Left)
+	if r2Left > x1 {
+		x1 = r2Left
 	}
 	y1 := r1.Y
-	if r2.Y > y1 {
-		y1 = r2.Y
+	r2Top := int(r2.Top)
+	if r2Top > y1 {
+		y1 = r2Top
 	}
 
 	x2 := r1.X + r1.Width
-	r2Right := r2.X + r2.Width
+	r2Right := int(r2.Right)
 	if r2Right < x2 {
 		x2 = r2Right
 	}
 
 	y2 := r1.Y + r1.Height
-	r2Bottom := r2.Y + r2.Height
+	r2Bottom := int(r2.Bottom)
 	if r2Bottom < y2 {
 		y2 = r2Bottom
 	}
@@ -135,9 +139,9 @@ func getOverlapArea(r1, r2 Rectangle) int {
 	return 0
 }
 
-// fixBounds checks if the window would be positioned on-screen in logical (DIP) space.
-// It detects the best matching monitor for the logical bounds and forces the logical bounds
-// to fit completely within that monitor's logical work area.
+// fixBounds checks if the window would be positioned on-screen in physical space.
+// Since bounds are loaded as (physical X/Y, logical Width/Height), we convert Width/Height
+// to physical based on the monitor containing (X,Y) and clamp to physical work area.
 func fixBounds(ctx context.Context, bounds *Rectangle) *Rectangle {
 	if bounds == nil {
 		return nil
@@ -152,14 +156,14 @@ func fixBounds(ctx context.Context, bounds *Rectangle) *Rectangle {
 		return bounds
 	}
 
+	// 1. Find which monitor contains the physical point (X, Y)
 	var bestMonitor *Monitor
-	maxOverlap := 0
-
 	for i := range monitors {
-		overlap := getOverlapArea(*bounds, monitors[i].LogicalMonitor)
-		if overlap > maxOverlap {
-			maxOverlap = overlap
-			bestMonitor = &monitors[i]
+		m := &monitors[i]
+		if bounds.X >= int(m.RcMonitor.Left) && bounds.X < int(m.RcMonitor.Right) &&
+			bounds.Y >= int(m.RcMonitor.Top) && bounds.Y < int(m.RcMonitor.Bottom) {
+			bestMonitor = m
+			break
 		}
 	}
 
@@ -176,30 +180,92 @@ func fixBounds(ctx context.Context, bounds *Rectangle) *Rectangle {
 		}
 	}
 
-	logicalWork := bestMonitor.LogicalWork
+	// 2. Convert logical width/height to physical width/height using the selected monitor's scale
+	scale := bestMonitor.Scale
+	physWidth := int(float64(bounds.Width) * scale)
+	physHeight := int(float64(bounds.Height) * scale)
 
-	// Adjust width/height if they exceed the monitor's logical work area
-	if bounds.Width > logicalWork.Width {
-		bounds.Width = logicalWork.Width
-	}
-	if bounds.Height > logicalWork.Height {
-		bounds.Height = logicalWork.Height
-	}
-
-	// Ensure window is fully positioned within the monitor's logical work area
-	if bounds.X < logicalWork.X {
-		bounds.X = logicalWork.X
-	} else if bounds.X+bounds.Width > logicalWork.X+logicalWork.Width {
-		bounds.X = logicalWork.X + logicalWork.Width - bounds.Width
+	physBounds := &Rectangle{
+		X:      bounds.X,
+		Y:      bounds.Y,
+		Width:  physWidth,
+		Height: physHeight,
 	}
 
-	if bounds.Y < logicalWork.Y {
-		bounds.Y = logicalWork.Y
-	} else if bounds.Y+bounds.Height > logicalWork.Y+logicalWork.Height {
-		bounds.Y = logicalWork.Y + logicalWork.Height - bounds.Height
+	// 3. Clamp physical bounds to the selected monitor's physical work area
+	rcWork := bestMonitor.RcWork
+	workWidth := int(rcWork.Right - rcWork.Left)
+	workHeight := int(rcWork.Bottom - rcWork.Top)
+	workLeft := int(rcWork.Left)
+	workTop := int(rcWork.Top)
+
+	if physBounds.Width > workWidth {
+		physBounds.Width = workWidth
+	}
+	if physBounds.Height > workHeight {
+		physBounds.Height = workHeight
 	}
 
-	return bounds
+	if physBounds.X < workLeft {
+		physBounds.X = workLeft
+	} else if physBounds.X+physBounds.Width > workLeft+workWidth {
+		physBounds.X = workLeft + workWidth - physBounds.Width
+	}
+
+	if physBounds.Y < workTop {
+		physBounds.Y = workTop
+	} else if physBounds.Y+physBounds.Height > workTop+workHeight {
+		physBounds.Y = workTop + workHeight - physBounds.Height
+	}
+
+	return physBounds
+}
+
+// scalePhysicalToLogical converts the validated physical bounds (returned by fixBounds) to logical DIPs for Wails' initial window creation.
+func scalePhysicalToLogical(bounds *Rectangle) (int, int) {
+	if bounds == nil {
+		return 1200, 800
+	}
+	monitors := getAllMonitors()
+	if len(monitors) == 0 {
+		return bounds.Width, bounds.Height
+	}
+
+	var bestMonitor *Monitor
+	for i := range monitors {
+		m := &monitors[i]
+		if bounds.X >= int(m.RcMonitor.Left) && bounds.X < int(m.RcMonitor.Right) &&
+			bounds.Y >= int(m.RcMonitor.Top) && bounds.Y < int(m.RcMonitor.Bottom) {
+			bestMonitor = m
+			break
+		}
+	}
+
+	if bestMonitor == nil {
+		for i := range monitors {
+			if monitors[i].IsPrimary {
+				bestMonitor = &monitors[i]
+				break
+			}
+		}
+		if bestMonitor == nil {
+			bestMonitor = &monitors[0]
+		}
+	}
+
+	// Scale down the physical dimensions to logical DIPs using the matched monitor's scale factor
+	logicalWidth := int(float64(bounds.Width) / bestMonitor.Scale)
+	logicalHeight := int(float64(bounds.Height) / bestMonitor.Scale)
+
+	// Make sure we have a sane minimum size
+	if logicalWidth < 100 {
+		logicalWidth = 100
+	}
+	if logicalHeight < 100 {
+		logicalHeight = 100
+	}
+
+	return logicalWidth, logicalHeight
 }
 
 // findMainWindowHWND finds the HWND of the main window belonging to our own process.
@@ -210,9 +276,17 @@ func findMainWindowHWND() syscall.Handle {
 	enumWindows := user32.NewProc("EnumWindows")
 	getWindowThreadProcessId := user32.NewProc("GetWindowThreadProcessId")
 	getClassNameW := user32.NewProc("GetClassNameW")
+	getWindowTextW := user32.NewProc("GetWindowTextW")
 
 	myPid, _, _ := getCurrentProcessId.Call()
 	var mainHwnd syscall.Handle
+
+	// We'll write a debug log to see what windows are found
+	logFile, _ := os.OpenFile("C:\\y\\w\\2-web\\0-dp\\trace-viewer-25-go\\window_debug.log", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
+	if logFile != nil {
+		defer logFile.Close()
+		logFile.WriteString("Starting window enumeration...\n")
+	}
 
 	cb := syscall.NewCallback(func(hwnd syscall.Handle, _ uintptr) uintptr {
 		var pid uint32
@@ -221,9 +295,21 @@ func findMainWindowHWND() syscall.Handle {
 			classBuf := make([]uint16, 256)
 			getClassNameW.Call(uintptr(hwnd), uintptr(unsafe.Pointer(&classBuf[0])), 256)
 			className := syscall.UTF16ToString(classBuf)
-			if className == "wailsWindow" || className == "Chrome_WidgetWin_1" {
+
+			textBuf := make([]uint16, 256)
+			getWindowTextW.Call(uintptr(hwnd), uintptr(unsafe.Pointer(&textBuf[0])), 256)
+			windowText := syscall.UTF16ToString(textBuf)
+
+			if logFile != nil {
+				logFile.WriteString("Found window: HWND=" + strconv.Itoa(int(hwnd)) + " Class=" + className + " Title=" + windowText + "\n")
+			}
+
+			if className == "wailsWindow" || className == "Chrome_WidgetWin_1" || windowText == "wails-events" {
 				mainHwnd = hwnd
-				return 0 // stop enumeration
+				if logFile != nil {
+					logFile.WriteString("Selected main window: " + className + "\n")
+				}
+				// Continue enumeration to log all, but save the handle
 			}
 		}
 		return 1 // continue enumeration
@@ -234,30 +320,52 @@ func findMainWindowHWND() syscall.Handle {
 }
 
 // restoreWindowPositionAndSize sets the window position and size using absolute Win32 coordinates.
-// It translates the validated logical bounds to absolute physical pixels according to the best-matched monitor's DPI scaling.
+// Since bounds are in physical pixels, we directly use them and clamp them to the target monitor's physical work area.
 func restoreWindowPositionAndSize(ctx context.Context, bounds *Rectangle) {
 	hwnd := findMainWindowHWND()
+
+	logFile, _ := os.OpenFile("C:\\y\\w\\2-web\\0-dp\\trace-viewer-25-go\\window_debug.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
+	if logFile != nil {
+		defer logFile.Close()
+		logFile.WriteString("restoreWindowPositionAndSize called with physical bounds: X=" + strconv.Itoa(bounds.X) + " Y=" + strconv.Itoa(bounds.Y) + " W=" + strconv.Itoa(bounds.Width) + " H=" + strconv.Itoa(bounds.Height) + "\n")
+	}
+
 	if hwnd != 0 {
 		monitors := getAllMonitors()
+
+		if logFile != nil {
+			logFile.WriteString("Enumerated monitors count: " + strconv.Itoa(len(monitors)) + "\n")
+			for i, m := range monitors {
+				logFile.WriteString("Monitor [" + strconv.Itoa(i) + "]: Scale=" + strconv.FormatFloat(m.Scale, 'f', 4, 64) + " IsPrimary=" + strconv.FormatBool(m.IsPrimary) + "\n")
+				logFile.WriteString("  Physical Monitor: L=" + strconv.Itoa(int(m.RcMonitor.Left)) + " T=" + strconv.Itoa(int(m.RcMonitor.Top)) + " R=" + strconv.Itoa(int(m.RcMonitor.Right)) + " B=" + strconv.Itoa(int(m.RcMonitor.Bottom)) + "\n")
+				logFile.WriteString("  Physical Work:    L=" + strconv.Itoa(int(m.RcWork.Left)) + " T=" + strconv.Itoa(int(m.RcWork.Top)) + " R=" + strconv.Itoa(int(m.RcWork.Right)) + " B=" + strconv.Itoa(int(m.RcWork.Bottom)) + "\n")
+			}
+		}
+
 		if len(monitors) == 0 {
-			// Fallback to Wails if no monitors enumerated
+			if logFile != nil {
+				logFile.WriteString("Fallback: No monitors found. Calling WindowSetPosition/Size\n")
+			}
 			runtime.WindowSetPosition(ctx, bounds.X, bounds.Y)
 			runtime.WindowSetSize(ctx, bounds.Width, bounds.Height)
 			runtime.WindowShow(ctx)
 			return
 		}
 
-		// Find best matching monitor for the logical bounds
+		// Find best matching monitor for the physical bounds
 		var bestMonitor *Monitor
-		maxOverlap := 0
 		for i := range monitors {
-			overlap := getOverlapArea(*bounds, monitors[i].LogicalMonitor)
-			if overlap > maxOverlap {
-				maxOverlap = overlap
-				bestMonitor = &monitors[i]
+			m := &monitors[i]
+			if bounds.X >= int(m.RcMonitor.Left) && bounds.X < int(m.RcMonitor.Right) &&
+				bounds.Y >= int(m.RcMonitor.Top) && bounds.Y < int(m.RcMonitor.Bottom) {
+				bestMonitor = m
+				break
 			}
 		}
 		if bestMonitor == nil {
+			if logFile != nil {
+				logFile.WriteString("No containing monitor found. Selecting primary monitor...\n")
+			}
 			for i := range monitors {
 				if monitors[i].IsPrimary {
 					bestMonitor = &monitors[i]
@@ -269,15 +377,11 @@ func restoreWindowPositionAndSize(ctx context.Context, bounds *Rectangle) {
 			}
 		}
 
-		// Convert logical bounds to physical bounds
-		scale := bestMonitor.Scale
-		localX := bounds.X - bestMonitor.LogicalMonitor.X
-		localY := bounds.Y - bestMonitor.LogicalMonitor.Y
-
-		physWidth := int(float64(bounds.Width) * scale)
-		physHeight := int(float64(bounds.Height) * scale)
-		physX := int(float64(bestMonitor.RcMonitor.Left) + float64(localX)*scale)
-		physY := int(float64(bestMonitor.RcMonitor.Top) + float64(localY)*scale)
+		// The bounds are already physical! No scaling or logical conversions needed!
+		physX := bounds.X
+		physY := bounds.Y
+		physWidth := bounds.Width
+		physHeight := bounds.Height
 
 		// Clamp physical bounds to matched monitor physical work area
 		workLeft := int(bestMonitor.RcWork.Left)
@@ -304,14 +408,19 @@ func restoreWindowPositionAndSize(ctx context.Context, bounds *Rectangle) {
 			physY = workBottom - physHeight
 		}
 
+		if logFile != nil {
+			logFile.WriteString("Final physical bounds for SetWindowPos: X=" + strconv.Itoa(physX) + " Y=" + strconv.Itoa(physY) + " W=" + strconv.Itoa(physWidth) + " H=" + strconv.Itoa(physHeight) + "\n")
+		}
+
 		// Call native SetWindowPos with physical pixels
 		const (
 			SWP_NOZORDER   = 0x0004
-			SWP_NOACTIVATE = 0x0010
+			SWP_SHOWWINDOW = 0x0040
 		)
 		procSetWindowPos := user32.NewProc("SetWindowPos")
 
-		// 1. Move and size the hidden window first (with SWP_NOACTIVATE)
+		// Move, size, and SHOW the window in a single atomic Win32 call!
+		// This bypasses any deferred CW_USEDEFAULT centering overrides.
 		procSetWindowPos.Call(
 			uintptr(hwnd),
 			0,
@@ -319,16 +428,22 @@ func restoreWindowPositionAndSize(ctx context.Context, bounds *Rectangle) {
 			uintptr(physY),
 			uintptr(physWidth),
 			uintptr(physHeight),
-			uintptr(SWP_NOZORDER|SWP_NOACTIVATE),
+			uintptr(SWP_NOZORDER|SWP_SHOWWINDOW),
 		)
 
-		// 2. Show the window using Wails runtime so it updates internal states and hasBeenShown flags
+		// Show the window using Wails runtime so it updates internal states and hasBeenShown flags (this becomes a no-op since it's already shown)
 		runtime.WindowShow(ctx)
 
-		// 3. Force the exact physical coordinates and size AFTER showing the window.
-		// This bypasses any WM_DPICHANGED suggestions and first-show centering overrides.
+		// Force the exact physical coordinates and size AFTER showing the window to ensure no DPI-suggested resize wins.
 		go func() {
 			time.Sleep(100 * time.Millisecond)
+			if logFile != nil {
+				lf, _ := os.OpenFile("C:\\y\\w\\2-web\\0-dp\\trace-viewer-25-go\\window_debug.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
+				if lf != nil {
+					lf.WriteString("Post-show secondary SetWindowPos reinforcement call: X=" + strconv.Itoa(physX) + " Y=" + strconv.Itoa(physY) + " W=" + strconv.Itoa(physWidth) + " H=" + strconv.Itoa(physHeight) + "\n")
+					lf.Close()
+				}
+			}
 			procSetWindowPos.Call(
 				uintptr(hwnd),
 				0,
@@ -340,6 +455,9 @@ func restoreWindowPositionAndSize(ctx context.Context, bounds *Rectangle) {
 			)
 		}()
 	} else {
+		if logFile != nil {
+			logFile.WriteString("HWND was 0! Fallback to Wails WindowSetPosition/Size\n")
+		}
 		// Fallback to Wails if HWND could not be resolved
 		runtime.WindowSetPosition(ctx, bounds.X, bounds.Y)
 		runtime.WindowSetSize(ctx, bounds.Width, bounds.Height)

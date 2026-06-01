@@ -82,3 +82,11 @@ func restoreWindowPositionAndSize(ctx context.Context, bounds *Rectangle) {
 	runtime.WindowSetSize(ctx, bounds.Width, bounds.Height)
 	runtime.WindowShow(ctx)
 }
+
+// scalePhysicalToLogical is a non-Windows fallback which returns the bounds directly since they are already logical.
+func scalePhysicalToLogical(bounds *Rectangle) (int, int) {
+	if bounds == nil {
+		return 1200, 800
+	}
+	return bounds.Width, bounds.Height
+}
