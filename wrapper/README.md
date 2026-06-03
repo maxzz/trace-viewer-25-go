@@ -11,6 +11,12 @@ cd frontend/src
 npm install
 ```
 
+### Install Wails
+
+```powershell
+go install github.com/wailsapp/wails/v2/cmd/wails@latest
+```
+
 [Here](scripts) you can find useful scripts for building on different platforms and Wails CLI installation.
 
 ## Live Development
